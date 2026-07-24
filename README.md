@@ -8,6 +8,20 @@ An end-to-end reproduction and visualization workflow for NVIDIA Alpamayo 1.5. T
 
 [Watch on YouTube](https://youtu.be/g0qM3Ez-PJY) | [Download the original MP4](assets/videos/alpamayo_2x2_10s.mp4)
 
+### Unified A100 Showcase
+
+The final A100 integration showcase places the Alpamayo 2x2 result beside the verified
+VisionPilot CUDA 12/ONNX Runtime result. It is a qualitative side-by-side presentation of
+different inputs and model contracts, not a quantitative benchmark or sensor-fusion result.
+
+[![Alpamayo and VisionPilot A100 showcase](assets/images/alpamayo_visionpilot_showcase_poster.png)](assets/videos/alpamayo_visionpilot_showcase.mp4)
+
+[Download the unified showcase MP4](assets/videos/alpamayo_visionpilot_showcase.mp4) | [Integration guide](docs/VISIONPILOT_INTEGRATION.md)
+
+- Resolution: `1920x540`
+- Duration: `7.0 seconds`
+- Video: H.264, `5 FPS`, no audio
+
 - Resolution: `1920x1080`
 - Duration: `10.0 seconds`
 - Frame rate: `5 FPS`
@@ -51,6 +65,23 @@ It covers the complete verified path used for this project:
 9. Running the official flow with the SDPA fallback
 10. Running the 10-second sliding-window videos and the 2x2 composite
 11. Downloading results to a Windows computer and verifying the MP4 files
+
+## Dual-Backend Integration
+
+This repository also provides an A100 integration layer for the independently reproduced
+[VisionPilot project](https://github.com/130070/vision_pilot) at pinned commit `e8cc95f4`.
+
+| Backend | Runtime | Input | Output |
+|---|---|---|---|
+| Alpamayo 1.5 | Python, PyTorch, SDPA | Multi-camera frames, ego history, navigation text | Future trajectory and Chain-of-Causation text |
+| VisionPilot | C++, ONNX Runtime, Docker CUDA | Front-camera video and vehicle speed | Path, CIPO distance, controls, MP4, and CSV telemetry |
+
+The integration keeps both runtimes isolated and adds repeatable A100 deployment, a shared
+environment check, VisionPilot A100 verification, and a labeled side-by-side showcase. It is not a
+model-level fusion or a quantitative comparison because the backends use different data and camera
+contracts.
+
+See the [complete VisionPilot integration guide](docs/VISIONPILOT_INTEGRATION.md).
 
 ## Demonstrations
 
@@ -142,6 +173,7 @@ These clips are qualitative demonstrations, not a benchmark split. The larger er
 |   |-- images
 |   |   |-- alpamayo_2x2_10s_cover.gif
 |   |   |-- alpamayo_2x2_10s_poster.png
+|   |   |-- alpamayo_visionpilot_showcase_poster.png
 |   |   |-- left_turn_18m_poster.png
 |   |   |-- right_turn_14m_poster.png
 |   |   `-- left_turn_5m_poster.png
@@ -153,16 +185,24 @@ These clips are qualitative demonstrations, not a benchmark split. The larger er
 |   |   `-- left_turn_5m.json
 |   `-- videos
 |       |-- alpamayo_2x2_10s.mp4
+|       |-- alpamayo_visionpilot_showcase.mp4
 |       |-- alpamayo_10s_obstacle_result.mp4
 |       |-- alpamayo_10s_left_turn_18m.mp4
 |       |-- alpamayo_10s_right_turn_14m.mp4
 |       `-- alpamayo_10s_left_turn_5m.mp4
+|-- docker
+|   `-- visionpilot-cuda12.Dockerfile
 |-- docs
 |   |-- BEGINNER_GUIDE.md
 |   |-- ENVIRONMENT.md
+|   |-- VISIONPILOT_INTEGRATION.md
 |   `-- REPRODUCTION.md
 `-- scripts
     |-- check_environment.py
+    |-- check_unified_environment.py
+    |-- setup_visionpilot_a100.sh
+    |-- run_visionpilot_demo.sh
+    |-- create_unified_showcase.sh
     |-- alpamayo_10s_sliding_demo.py
     `-- alpamayo_three_scenes_and_grid.py
 ```
@@ -185,6 +225,11 @@ Tested setup:
 - FFmpeg with H.264, `drawtext`, and `xstack` support
 
 The official single-sample inference requires substantially more memory than an 8 GB consumer GPU. Initial setup was verified on an RTX 4060 Ti, but complete model inference was executed on an A100.
+
+The optional VisionPilot backend is built from its pinned source commit with this repository's CUDA
+12.8 Dockerfile and the official ONNX Runtime 1.22.0 CUDA 12 package. It requires NVIDIA driver 525
+or newer and does not reuse the CUDA 13 archive from the VisionPilot `v1.1` release. Run
+`scripts/check_unified_environment.py` on the target A100 before inference.
 
 See the [complete environment and version reference](docs/ENVIRONMENT.md) for all 17 Python
 package versions and an automated device check.
@@ -395,12 +440,15 @@ These checks reduce risk but do not provide hard GPU resource isolation. For pro
 - minADE values are clip-specific and are not a replacement for dataset-wide evaluation.
 - Navigation instructions remain fixed within each demonstration segment.
 - Camera overlays depend on valid dataset intrinsics, extrinsics, and ego-motion poses.
+- The VisionPilot showcase uses different source data and is not a direct accuracy comparison with Alpamayo.
 
 ## References
 
 - [NVIDIA Alpamayo 1.5](https://github.com/NVlabs/alpamayo1.5)
 - [Alpamayo-1.5-10B on Hugging Face](https://huggingface.co/nvidia/Alpamayo-1.5-10B)
 - [NVIDIA PhysicalAI Autonomous Vehicles Dataset](https://huggingface.co/datasets/nvidia/PhysicalAI-Autonomous-Vehicles)
+- [Autoware Foundation VisionPilot](https://github.com/autowarefoundation/vision_pilot)
+- [Verified VisionPilot reproduction](https://github.com/130070/vision_pilot)
 
 ## Acknowledgements
 
