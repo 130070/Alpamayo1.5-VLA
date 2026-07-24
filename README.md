@@ -2,9 +2,11 @@
 
 An end-to-end reproduction and visualization workflow for NVIDIA Alpamayo 1.5. This repository runs multi-camera driving inference on clips from the NVIDIA PhysicalAI Autonomous Vehicles dataset, predicts future ego trajectories, produces Chain-of-Causation (CoC) explanations, projects the predicted path back into the calibrated front camera, and exports synchronized demonstration videos.
 
-[![Animated Alpamayo 1.5 synchronized 2x2 demo](assets/images/alpamayo_2x2_10s_cover.gif)](assets/videos/alpamayo_2x2_10s.mp4)
+[![Animated Alpamayo 1.5 synchronized 2x2 demo](assets/images/alpamayo_2x2_10s_cover.gif)](https://youtu.be/g0qM3Ez-PJY)
 
-**This animated cover is generated from the combined video. Click it to open the complete synchronized 2x2 MP4 with full image quality.**
+**Click the animated cover to watch the complete demo on YouTube.**
+
+[Watch on YouTube](https://youtu.be/g0qM3Ez-PJY) | [Download the original MP4](assets/videos/alpamayo_2x2_10s.mp4)
 
 - Resolution: `1920x1080`
 - Duration: `10.0 seconds`
