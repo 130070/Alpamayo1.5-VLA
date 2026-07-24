@@ -2,9 +2,9 @@
 
 An end-to-end reproduction and visualization workflow for NVIDIA Alpamayo 1.5. This repository runs multi-camera driving inference on clips from the NVIDIA PhysicalAI Autonomous Vehicles dataset, predicts future ego trajectories, produces Chain-of-Causation (CoC) explanations, projects the predicted path back into the calibrated front camera, and exports synchronized demonstration videos.
 
-[![Alpamayo 1.5 synchronized 2x2 demo](assets/images/alpamayo_2x2_10s_poster.png)](assets/videos/alpamayo_2x2_10s.mp4)
+[![Animated Alpamayo 1.5 synchronized 2x2 demo](assets/images/alpamayo_2x2_10s_cover.gif)](assets/videos/alpamayo_2x2_10s.mp4)
 
-**Click the cover image to open the complete synchronized 2x2 MP4.**
+**This animated cover is generated from the combined video. Click it to open the complete synchronized 2x2 MP4 with full image quality.**
 
 - Resolution: `1920x1080`
 - Duration: `10.0 seconds`
@@ -29,6 +29,26 @@ Each window produces:
 - A natural-language Chain-of-Causation explanation
 - A camera-calibrated visualization of the future path
 - A per-window minADE value against the dataset ground truth
+
+## Start Here
+
+If you have never deployed a CUDA model, used SSH, authenticated with Hugging Face, or moved a model cache between servers, start with the fully guided tutorial:
+
+**[Beginner's End-to-End Reproduction Guide](docs/BEGINNER_GUIDE.md)**
+
+It covers the complete verified path used for this project:
+
+1. Checking the GPU, CUDA, Python, and disk on a remote server
+2. Cloning the official NVIDIA repository
+3. Installing `uv`, Python 3.12, PyTorch, and project dependencies
+4. Requesting access to every gated Hugging Face resource
+5. Logging in without exposing an access token
+6. Downloading the example dataset and approximately 22 GB of model weights
+7. Diagnosing dataset `403`, Cosmos access, FlashAttention, and CUDA OOM errors
+8. Moving code and Hugging Face caches from an 8 GB RTX 4060 Ti server to an A100 server
+9. Running the official flow with the SDPA fallback
+10. Running the 10-second sliding-window videos and the 2x2 composite
+11. Downloading results to a Windows computer and verifying the MP4 files
 
 ## Demonstrations
 
@@ -118,6 +138,7 @@ These clips are qualitative demonstrations, not a benchmark split. The larger er
 |-- README.md
 |-- assets
 |   |-- images
+|   |   |-- alpamayo_2x2_10s_cover.gif
 |   |   |-- alpamayo_2x2_10s_poster.png
 |   |   |-- left_turn_18m_poster.png
 |   |   |-- right_turn_14m_poster.png
@@ -135,6 +156,7 @@ These clips are qualitative demonstrations, not a benchmark split. The larger er
 |       |-- alpamayo_10s_right_turn_14m.mp4
 |       `-- alpamayo_10s_left_turn_5m.mp4
 |-- docs
+|   |-- BEGINNER_GUIDE.md
 |   `-- REPRODUCTION.md
 `-- scripts
     |-- alpamayo_10s_sliding_demo.py
@@ -183,7 +205,7 @@ The official single-sample inference requires substantially more memory than an 
    python -c "from alpamayo1_5.models.alpamayo1_5 import Alpamayo1_5"
    ```
 
-See [docs/REPRODUCTION.md](docs/REPRODUCTION.md) for complete configuration, execution, validation, and troubleshooting notes.
+Use the [beginner guide](docs/BEGINNER_GUIDE.md) for the complete clone-to-demo workflow. See [docs/REPRODUCTION.md](docs/REPRODUCTION.md) for implementation-focused configuration, projection, validation, and troubleshooting notes.
 
 ## Running the Single-Scene Demo
 
