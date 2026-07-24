@@ -18,6 +18,151 @@ At the end, you will have:
 - Front-camera videos containing predictions, ground truth, and CoC text
 - A synchronized 2x2 composite MP4
 
+## Clean Reproduction: Exact Command Order
+
+This is the shortest successful path on a clean Linux GPU server. Later sections explain every
+command and the failures encountered during the original reproduction.
+
+### A. Accept access in a web browser
+
+Log in to one Hugging Face account and accept all three resources:
+
+1. `nvidia/PhysicalAI-Autonomous-Vehicles`
+2. `nvidia/Alpamayo-1.5-10B`
+3. `nvidia/Cosmos-Reason2-8B`
+
+Create a read-only Hugging Face token. Keep it private.
+
+### B. Connect and inspect the server
+
+From Windows PowerShell:
+
+```powershell
+ssh <SERVER_USER>@<SERVER_IP>
+```
+
+On the Linux server:
+
+```bash
+nvidia-smi
+df -h "$HOME"
+```
+
+Use a GPU with at least 24 GB VRAM, at least 30,000 MiB currently free for these scripts, and at
+least 80 GB free disk space.
+
+### C. Clone the official code and this reproduction repository
+
+```bash
+cd "$HOME"
+git clone https://github.com/NVlabs/alpamayo1.5.git
+git clone https://github.com/130070/Alpamayo1.5-VLA.git
+git -C "$HOME/alpamayo1.5" checkout f42e594aaf8b50dcd2cbb359d62e3ffc7b12fcf8
+```
+
+They must remain as two separate sibling directories:
+
+```text
+~/alpamayo1.5/          # NVIDIA model code and Python environment
+~/Alpamayo1.5-VLA/      # environment checker, two demo scripts, docs, and sample outputs
+```
+
+The checkout command pins the official code and dependency lock to the tested revision.
+
+### D. Create the official environment
+
+```bash
+cd "$HOME/alpamayo1.5"
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+uv python install 3.12
+uv venv a1_5_venv --python 3.12
+source a1_5_venv/bin/activate
+uv sync --active --no-install-package flash-attn
+```
+
+### E. Log in and copy the VLA scripts
+
+```bash
+hf auth login
+hf auth whoami
+
+cp "$HOME/Alpamayo1.5-VLA/scripts/"*.py "$HOME/alpamayo1.5/"
+cd "$HOME/alpamayo1.5"
+ls -l check_environment.py alpamayo_10s_sliding_demo.py \
+  alpamayo_three_scenes_and_grid.py
+```
+
+There are two inference/rendering programs plus one environment checker. They run inside the
+official environment and import NVIDIA's installed `alpamayo1_5` package.
+
+### F. Check the complete environment and authorization
+
+```bash
+source a1_5_venv/bin/activate
+mkdir -p outputs
+set -o pipefail
+python check_environment.py --check-hf-access \
+  | tee outputs/environment-check.txt
+```
+
+Continue only when the summary contains `0 failure(s)`. Cache entries may be `WARN` before the
+first model download. The checker queries gated repository metadata but does not download weights.
+
+### G. Run the first scene
+
+```bash
+export PYTHONUNBUFFERED=1
+# Optional only when direct Hugging Face access does not work:
+# export HF_ENDPOINT=https://hf-mirror.com
+
+python alpamayo_10s_sliding_demo.py 2>&1 \
+  | tee outputs/alpamayo_10s_run.log
+```
+
+On the first run, this downloads the authorized data and approximately 22 GB of model files. It
+runs five real inference windows and creates:
+
+```text
+outputs/alpamayo_10s/alpamayo_10s_result.mp4
+```
+
+### H. Run three more scenes and build the 2x2 composite
+
+Only start this after the first scene has completed:
+
+```bash
+python alpamayo_three_scenes_and_grid.py 2>&1 \
+  | tee outputs/alpamayo_batch_run.log
+```
+
+The final video is:
+
+```text
+outputs/alpamayo_2x2/alpamayo_2x2_10s.mp4
+```
+
+### I. Verify and download the final video
+
+```bash
+ffprobe -v error \
+  -select_streams v:0 \
+  -show_entries stream=codec_name,width,height,r_frame_rate,nb_frames,duration \
+  -of json \
+  outputs/alpamayo_2x2/alpamayo_2x2_10s.mp4
+```
+
+Expected: H.264, 1920x1080, 5 FPS, 10 seconds, and 50 frames.
+
+From Windows PowerShell:
+
+```powershell
+scp <SERVER_USER>@<SERVER_IP>:~/alpamayo1.5/outputs/alpamayo_2x2/alpamayo_2x2_10s.mp4 .
+```
+
+The remaining sections explain this same flow in detail and document the actual troubleshooting
+history.
+
 ## 2. Concepts You Need to Know
 
 ### SSH
@@ -66,6 +211,11 @@ Official approximate VRAM requirements are:
 | 16 samples with classifier-free guidance | 60 GB |
 
 An RTX 3090, A100, H100, or B200 is appropriate for single-sample inference. An 8 GB RTX 4060 Ti is not.
+
+The verified runtime used Python `3.12.3`, `uv 0.11.31`, PyTorch `2.8.0+cu128`,
+`physical-ai-av 0.2.0`, and `transformers 4.57.1`. See the
+[complete environment reference](ENVIRONMENT.md) for every locked Python package version and the
+automated checker.
 
 ## 4. Request Every Required Hugging Face Access
 
@@ -117,11 +267,13 @@ python3 --version
 
 The SDPA path does not require compiling FlashAttention, but `nvcc` is required if you choose the default FlashAttention path. Do not continue if disk space is nearly exhausted.
 
-## 7. Clone the Official Repository
+## 7. Clone Both Repositories
 
 ```bash
 cd "$HOME"
 git clone https://github.com/NVlabs/alpamayo1.5.git
+git clone https://github.com/130070/Alpamayo1.5-VLA.git
+git -C "$HOME/alpamayo1.5" checkout f42e594aaf8b50dcd2cbb359d62e3ffc7b12fcf8
 cd alpamayo1.5
 ```
 
@@ -130,7 +282,12 @@ Confirm the important files:
 ```bash
 test -f pyproject.toml && echo "pyproject.toml found"
 test -f src/alpamayo1_5/test_inference.py && echo "test script found"
+test -f "$HOME/Alpamayo1.5-VLA/scripts/check_environment.py" \
+  && echo "VLA scripts found"
 ```
+
+The official repository owns the model environment. This repository stays separate and supplies
+scripts that are copied into the official root later.
 
 ## 8. Install uv
 
@@ -257,7 +414,10 @@ PY
 
 This verifies model access, but dataset access is checked only when the example clip is loaded.
 
-## 14. Run the Official Demo
+## 14. Optional: Run the Official Upstream Demo
+
+The current upstream test script uses the model's default attention implementation. Run it only if
+you installed the upstream default environment including FlashAttention:
 
 ```bash
 cd "$HOME/alpamayo1.5"
@@ -277,6 +437,10 @@ Run the demo inside `tmux`. Detach with `Ctrl+B`, then `D`. Reconnect with:
 ```bash
 tmux attach -t alpamayo
 ```
+
+If you used `--no-install-package flash-attn`, skip this optional upstream test. The two scripts in
+this repository explicitly use SDPA and form the tested path described in Sections 21-23. Their
+first run performs the required model and dataset downloads automatically.
 
 ## 15. Fix Gated-Access Errors
 
@@ -435,18 +599,27 @@ Before every window: at least 8,000 MiB free
 
 Do not stop another user's process. Wait or use another GPU when the guard fails.
 
-## 21. Install the Video Scripts
+## 21. Install and Check the Video Scripts
 
 On the A100:
 
 ```bash
 cd "$HOME"
-git clone https://github.com/130070/Alpamayo1.5-VLA.git
+test -d Alpamayo1.5-VLA || git clone https://github.com/130070/Alpamayo1.5-VLA.git
 cp "$HOME/Alpamayo1.5-VLA/scripts/"*.py "$HOME/alpamayo1.5/"
 cd "$HOME/alpamayo1.5"
+source a1_5_venv/bin/activate
+ls -l check_environment.py alpamayo_10s_sliding_demo.py \
+  alpamayo_three_scenes_and_grid.py
+mkdir -p outputs
+set -o pipefail
+python check_environment.py --check-hf-access \
+  | tee outputs/environment-check.txt
 ```
 
 The scripts import the upstream package, so run them from the upstream repository environment.
+Do not continue until the checker reports zero failures. A missing cache is only a warning before
+the first download.
 
 ## 22. Run One 10-Second Scene
 
@@ -455,6 +628,7 @@ cd "$HOME/alpamayo1.5"
 source a1_5_venv/bin/activate
 export HF_ENDPOINT=https://hf-mirror.com  # Remove if direct access works.
 export PYTHONUNBUFFERED=1
+mkdir -p outputs
 python alpamayo_10s_sliding_demo.py 2>&1 | tee outputs/alpamayo_10s_run.log
 ```
 
@@ -566,6 +740,7 @@ Solve errors in this order: network and account, gated access, dependencies, the
 - [ ] Python is 3.12
 - [ ] `torch.cuda.is_available()` is `True`
 - [ ] Alpamayo imports successfully
+- [ ] `python check_environment.py --check-hf-access` reports zero failures
 - [ ] Correct Hugging Face account is logged in
 - [ ] Dataset, Alpamayo, and Cosmos access are accepted
 - [ ] Main cache is approximately 21-22 GB

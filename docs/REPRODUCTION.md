@@ -21,6 +21,19 @@ mediapy
 
 FFmpeg must be discoverable through `PATH` for MP4 encoding and the 2x2 composite.
 
+The complete tested version matrix is recorded in [ENVIRONMENT.md](ENVIRONMENT.md). After cloning
+both repositories, copy all three utility files and run the checker from the official project root:
+
+```bash
+cp "$HOME/Alpamayo1.5-VLA/scripts/"*.py "$HOME/alpamayo1.5/"
+cd "$HOME/alpamayo1.5"
+source a1_5_venv/bin/activate
+python check_environment.py --check-hf-access
+```
+
+The checker is separate from the two demo programs. It performs no model inference and downloads no
+weights.
+
 ## 2. Access Requirements
 
 The model and dataset may require accepting Hugging Face access conditions. Authenticate using the standard Hugging Face CLI or the authentication method documented by the upstream project. Do not put access tokens in source files, shell history, commits, or issue reports.
@@ -98,7 +111,9 @@ This corridor is a presentation layer. It is not an additional neural-network ou
 
 ## 7. Single-Scene Execution
 
-Copy `alpamayo_10s_sliding_demo.py` into the upstream repository root. Review the constants at the top of the file:
+Copy all files from this repository's `scripts` directory into the upstream repository root, run
+`check_environment.py`, and review the constants at the top of
+`alpamayo_10s_sliding_demo.py`:
 
 ```python
 CLIP_ID

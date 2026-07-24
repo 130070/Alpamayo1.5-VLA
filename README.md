@@ -157,8 +157,10 @@ These clips are qualitative demonstrations, not a benchmark split. The larger er
 |       `-- alpamayo_10s_left_turn_5m.mp4
 |-- docs
 |   |-- BEGINNER_GUIDE.md
+|   |-- ENVIRONMENT.md
 |   `-- REPRODUCTION.md
 `-- scripts
+    |-- check_environment.py
     |-- alpamayo_10s_sliding_demo.py
     `-- alpamayo_three_scenes_and_grid.py
 ```
@@ -170,40 +172,150 @@ This repository contains the orchestration and visualization layer. The upstream
 Tested setup:
 
 - Ubuntu Linux
-- Python `3.12`
+- Python `3.12.3`
+- `uv 0.11.31`
 - PyTorch `2.8.0+cu128`
 - CUDA `12.8`
+- `physical-ai-av 0.2.0`
+- `transformers 4.57.1`
 - NVIDIA A100 `80 GB`
 - Alpamayo attention implementation: PyTorch SDPA
 - FFmpeg with H.264, `drawtext`, and `xstack` support
 
 The official single-sample inference requires substantially more memory than an 8 GB consumer GPU. Initial setup was verified on an RTX 4060 Ti, but complete model inference was executed on an A100.
 
-## Upstream Setup
+See the [complete environment and version reference](docs/ENVIRONMENT.md) for all 17 Python
+package versions and an automated device check.
 
-1. Clone and configure the official project:
+## Exact Clone-to-Run Workflow
 
-   ```bash
-   git clone https://github.com/NVlabs/alpamayo1.5.git
-   cd alpamayo1.5
-   ```
+The official repository and this repository have different responsibilities:
 
-2. Follow the upstream installation instructions and create a Python 3.12 environment.
+- `NVlabs/alpamayo1.5` provides the model implementation, dataset loader, processor, and locked
+  Python environment.
+- `130070/Alpamayo1.5-VLA` provides one environment checker and two demo scripts for
+  sliding-window inference, trajectory projection, rendering, and the 2x2 composite.
 
-3. Accept access requirements for the gated model and dataset on Hugging Face, then authenticate locally.
+Keep the repositories next to each other. Do not copy NVIDIA source code or gated weights into
+this repository.
 
-4. Copy the scripts from this repository into the upstream project root:
+### 1. Clone both repositories
 
-   ```bash
-   cp /path/to/Alpamayo1.5-VLA/scripts/*.py .
-   ```
+```bash
+cd "$HOME"
+git clone https://github.com/NVlabs/alpamayo1.5.git
+git clone https://github.com/130070/Alpamayo1.5-VLA.git
+git -C "$HOME/alpamayo1.5" checkout f42e594aaf8b50dcd2cbb359d62e3ffc7b12fcf8
+```
 
-5. Confirm that the following imports work:
+The resulting directories should be:
 
-   ```bash
-   python -c "import torch, physical_ai_av, mediapy, matplotlib"
-   python -c "from alpamayo1_5.models.alpamayo1_5 import Alpamayo1_5"
-   ```
+```text
+~/alpamayo1.5/          # official NVIDIA code and Python environment
+~/Alpamayo1.5-VLA/      # checker, two demo scripts, documentation, and example videos
+```
+
+The explicit checkout fixes the official source and `uv.lock` to the version documented here.
+
+### 2. Create the official Python environment
+
+```bash
+cd "$HOME/alpamayo1.5"
+uv python install 3.12
+uv venv a1_5_venv --python 3.12
+source a1_5_venv/bin/activate
+uv sync --active --no-install-package flash-attn
+```
+
+The last command installs the official locked dependencies but skips FlashAttention. The two demo
+scripts load the model with PyTorch SDPA, so FlashAttention is not required.
+
+### 3. Authenticate with Hugging Face
+
+Accept the terms for the dataset, Alpamayo model, and Cosmos model listed in the
+[beginner guide](docs/BEGINNER_GUIDE.md), then run:
+
+```bash
+hf auth login
+hf auth whoami
+```
+
+Paste a read-only token only into the hidden login prompt. Never put it in a script or command-line
+argument.
+
+### 4. Copy this repository's scripts into the official root
+
+```bash
+cp "$HOME/Alpamayo1.5-VLA/scripts/"*.py "$HOME/alpamayo1.5/"
+cd "$HOME/alpamayo1.5"
+```
+
+Confirm that three files were copied:
+
+```bash
+ls -l \
+  check_environment.py \
+  alpamayo_10s_sliding_demo.py \
+  alpamayo_three_scenes_and_grid.py
+```
+
+The last two files are the actual demo programs. `check_environment.py` performs readiness checks
+and does not run inference.
+
+### 5. Check the machine before downloading or loading the model
+
+```bash
+source a1_5_venv/bin/activate
+mkdir -p outputs
+set -o pipefail
+python check_environment.py --check-hf-access | tee outputs/environment-check.txt
+```
+
+Continue only when the final summary reports zero failures. Missing model cache entries are warnings
+before the first run because the model has not been downloaded yet.
+
+### 6. Run the first 10-second scene
+
+```bash
+export PYTHONUNBUFFERED=1
+# Optional only when direct Hugging Face access is unavailable:
+# export HF_ENDPOINT=https://hf-mirror.com
+
+python alpamayo_10s_sliding_demo.py 2>&1 \
+  | tee outputs/alpamayo_10s_run.log
+```
+
+The first run downloads the authorized sample data and approximately 22 GB of model files. It then
+runs five inference windows, saves each completed window to a resumable `.pt` cache, and renders the
+obstacle-avoidance MP4.
+
+### 7. Run the other three scenes and create the 2x2 video
+
+Do this only after Step 6 has produced
+`outputs/alpamayo_10s/alpamayo_10s_result.mp4`:
+
+```bash
+python alpamayo_three_scenes_and_grid.py 2>&1 \
+  | tee outputs/alpamayo_batch_run.log
+```
+
+The final file is:
+
+```text
+outputs/alpamayo_2x2/alpamayo_2x2_10s.mp4
+```
+
+### 8. Verify the result
+
+```bash
+ffprobe -v error \
+  -select_streams v:0 \
+  -show_entries stream=codec_name,width,height,r_frame_rate,nb_frames,duration \
+  -of json \
+  outputs/alpamayo_2x2/alpamayo_2x2_10s.mp4
+```
+
+Expected: H.264, `1920x1080`, `5 FPS`, `10 seconds`, and `50` frames.
 
 Use the [beginner guide](docs/BEGINNER_GUIDE.md) for the complete clone-to-demo workflow. See [docs/REPRODUCTION.md](docs/REPRODUCTION.md) for implementation-focused configuration, projection, validation, and troubleshooting notes.
 
@@ -213,7 +325,7 @@ Edit the constants near the top of `scripts/alpamayo_10s_sliding_demo.py` if a d
 
 ```bash
 export HF_ENDPOINT=https://hf-mirror.com  # Optional; remove if direct Hugging Face access works.
-python alpamayo_10s_sliding_demo.py
+PYTHONUNBUFFERED=1 python alpamayo_10s_sliding_demo.py
 ```
 
 The script writes:
@@ -235,7 +347,7 @@ Place both scripts in the upstream repository root, then run:
 
 ```bash
 export HF_ENDPOINT=https://hf-mirror.com
-python alpamayo_three_scenes_and_grid.py
+PYTHONUNBUFFERED=1 python alpamayo_three_scenes_and_grid.py
 ```
 
 The batch script:
