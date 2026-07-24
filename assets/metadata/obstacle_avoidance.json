@@ -1,0 +1,41 @@
+{
+  "clip_id": "030c760c-ae38-49aa-9ad8-f5650a545d26",
+  "segment_start_s": 5.1,
+  "segment_duration_s": 10.0,
+  "output_fps": 5,
+  "output_frames": 50,
+  "method": "Alpamayo-supported sliding-window inference over a continuous 10-second segment",
+  "model_input_per_window": "1.6 s ego history plus the latest 4 frames from each of 4 cameras",
+  "prediction_per_window": "6.4 s future trajectory plus Chain-of-Causation text",
+  "prediction_refresh_s": 2.0,
+  "windows": [
+    {
+      "t0_s": 5.1,
+      "min_ade_m": 0.935421347618103,
+      "chain_of_causation": "Nudge to the left to clear the construction equipment blocking the right side of our lane"
+    },
+    {
+      "t0_s": 7.1,
+      "min_ade_m": 0.4297229051589966,
+      "chain_of_causation": "Keep distance to the lead vehicle since it is directly ahead in our lane"
+    },
+    {
+      "t0_s": 9.1,
+      "min_ade_m": 0.42492443323135376,
+      "chain_of_causation": "Nudge to the left to clear the construction cones blocking the right side of our lane"
+    },
+    {
+      "t0_s": 11.1,
+      "min_ade_m": 0.49774980545043945,
+      "chain_of_causation": "Keep distance to the lead vehicle since it is directly ahead in our lane"
+    },
+    {
+      "t0_s": 13.1,
+      "min_ade_m": 1.3329524993896484,
+      "chain_of_causation": "Nudge to the left to clear the parked truck blocking the right side of our lane"
+    }
+  ],
+  "input_video": "outputs/alpamayo_10s/alpamayo_10s_input.mp4",
+  "result_video": "outputs/alpamayo_10s/alpamayo_10s_result.mp4",
+  "poster": "outputs/alpamayo_10s/alpamayo_10s_result_poster.png"
+}

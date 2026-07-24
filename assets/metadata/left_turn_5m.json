@@ -1,0 +1,45 @@
+{
+  "clip_id": "b7dd3c46-ca94-4ffa-a8cf-3a13350c8aba",
+  "scene_label": "Left turn - 5m",
+  "navigation_instruction": "Turn left in 5m",
+  "segment_start_s": 5.0,
+  "segment_duration_s": 10.0,
+  "output_fps": 5,
+  "output_frames": 50,
+  "method": "Alpamayo-supported sliding-window inference over a continuous 10-second segment",
+  "model_input_per_window": "1.6 s ego history plus the latest 4 frames from each of 4 cameras",
+  "prediction_per_window": "6.4 s future trajectory plus Chain-of-Causation text",
+  "prediction_refresh_s": 2.0,
+  "visualization": "Camera-calibrated projection on the front-wide image",
+  "corridor_note": "The blue driving corridor is derived from the model-predicted center trajectory; it is not a separately predicted lane-boundary segmentation.",
+  "windows": [
+    {
+      "t0_s": 5.0,
+      "min_ade_m": 1.5537195205688477,
+      "chain_of_causation": "Turn left at the intersection since the intersection is clear"
+    },
+    {
+      "t0_s": 7.0,
+      "min_ade_m": 1.0012476444244385,
+      "chain_of_causation": "Turn left at the intersection since the intersection is clear after stopping for the stop sign"
+    },
+    {
+      "t0_s": 9.0,
+      "min_ade_m": 1.7268155813217163,
+      "chain_of_causation": "Resume speed since the lane is clear after passing the stop sign"
+    },
+    {
+      "t0_s": 11.0,
+      "min_ade_m": 0.8140242099761963,
+      "chain_of_causation": "Keep lane since the lane is clear with no lead vehicle ahead"
+    },
+    {
+      "t0_s": 13.0,
+      "min_ade_m": 1.9125516414642334,
+      "chain_of_causation": "Keep lane since the lane is clear ahead"
+    }
+  ],
+  "input_video": "outputs/alpamayo_10s_left_turn_5m/input.mp4",
+  "result_video": "outputs/alpamayo_10s_left_turn_5m/result.mp4",
+  "poster": "outputs/alpamayo_10s_left_turn_5m/poster.png"
+}

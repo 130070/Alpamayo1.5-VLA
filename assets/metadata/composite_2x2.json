@@ -1,0 +1,14 @@
+{
+  "layout": "2x2 synchronized",
+  "duration_s": 10,
+  "resolution": "1920x1080",
+  "fps": 5,
+  "videos": [
+    "outputs/alpamayo_10s/alpamayo_10s_result.mp4",
+    "outputs/alpamayo_10s_left_turn_18m/result.mp4",
+    "outputs/alpamayo_10s_right_turn_14m/result.mp4",
+    "outputs/alpamayo_10s_left_turn_5m/result.mp4"
+  ],
+  "output": "outputs/alpamayo_2x2/alpamayo_2x2_10s.mp4",
+  "poster": "outputs/alpamayo_2x2/alpamayo_2x2_10s_poster.png"
+}

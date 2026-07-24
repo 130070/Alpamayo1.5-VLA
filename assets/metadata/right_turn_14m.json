@@ -1,0 +1,45 @@
+{
+  "clip_id": "82f9f689-6efb-4eb3-af10-070b52eeca22",
+  "scene_label": "Right turn - 14m",
+  "navigation_instruction": "Turn right in 14m",
+  "segment_start_s": 4.0,
+  "segment_duration_s": 10.0,
+  "output_fps": 5,
+  "output_frames": 50,
+  "method": "Alpamayo-supported sliding-window inference over a continuous 10-second segment",
+  "model_input_per_window": "1.6 s ego history plus the latest 4 frames from each of 4 cameras",
+  "prediction_per_window": "6.4 s future trajectory plus Chain-of-Causation text",
+  "prediction_refresh_s": 2.0,
+  "visualization": "Camera-calibrated projection on the front-wide image",
+  "corridor_note": "The blue driving corridor is derived from the model-predicted center trajectory; it is not a separately predicted lane-boundary segmentation.",
+  "windows": [
+    {
+      "t0_s": 4.0,
+      "min_ade_m": 0.4872409701347351,
+      "chain_of_causation": "Change lanes to the right and commit to a right turn because the signal is green, the lead vehicle is proceeding into the right\u2011turn lane, and there are no pedestrians blocking the crosswalk, so merging right and accelerating into the turn is the safe immediate action."
+    },
+    {
+      "t0_s": 6.0,
+      "min_ade_m": 3.437124013900757,
+      "chain_of_causation": "Change to the left lane after the right turn due to needing to merge into the main through lane and maintain safe spacing with vehicles already traveling on that road, as shown by the trajectory crossing into and then centering within our lane."
+    },
+    {
+      "t0_s": 8.0,
+      "min_ade_m": 7.014582633972168,
+      "chain_of_causation": "Accelerate to proceed through the intersection since the right-turn traffic light is green"
+    },
+    {
+      "t0_s": 10.0,
+      "min_ade_m": 1.8749176263809204,
+      "chain_of_causation": "Keep distance to the lead vehicle since it is directly ahead in our lane"
+    },
+    {
+      "t0_s": 12.0,
+      "min_ade_m": 1.5515131950378418,
+      "chain_of_causation": "Change lane to the left due to the upcoming right-lane split into a ramp and a lead vehicle ahead, then continue under the bridge with moderate acceleration because the signal is green and the path is clear."
+    }
+  ],
+  "input_video": "outputs/alpamayo_10s_right_turn_14m/input.mp4",
+  "result_video": "outputs/alpamayo_10s_right_turn_14m/result.mp4",
+  "poster": "outputs/alpamayo_10s_right_turn_14m/poster.png"
+}

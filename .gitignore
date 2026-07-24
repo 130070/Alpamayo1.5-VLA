@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.cache/
+.idea/
+.vscode/
+*.log
+*.pt
+*.pth
+*.safetensors
+outputs/
